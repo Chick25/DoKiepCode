@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Độ Kiếp Code: Từ Luyện Khí Đến Đại Thừa - CODE THE THANKS 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #090a14;
+            color: #e2e8f0;
+            font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Chỉ khóa touch trên canvas gameplay — UI modal vẫn cuộn được */
+        #gameCanvas {
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-cultivation {
+            font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+        }
+        .font-code {
+            font-family: 'JetBrains Mono', 'Be Vietnam Pro', monospace;
+        }
+        /* Tiêu đề start: không dùng bg-clip (hay bị cắt chữ trên desktop) */
+        .title-dokiep {
+            color: #67e8f9;
+            line-height: 1.35;
+            letter-spacing: 0.04em;
+            overflow: visible;
+            white-space: normal;
+            word-break: keep-all;
+            text-shadow:
+                0 0 12px rgba(34, 211, 238, 0.45),
+                0 2px 0 rgba(15, 23, 42, 0.8);
+        }
+        @media (min-width: 640px) {
+            .title-dokiep {
+                letter-spacing: 0.06em;
+            }
+        }
+        .neon-cyan {
+            text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+        }
+        .neon-gold {
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.55);
+        }
+        .neon-red {
+            text-shadow: 0 0 8px rgba(244, 63, 94, 0.55);
+        }
+        .box-glow-cyan {
+            box-shadow: 0 0 12px rgba(34, 211, 238, 0.2);
+        }
+        .box-glow-gold {
+            box-shadow: 0 0 14px rgba(250, 204, 21, 0.25);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Màn thắng / modal: cho phép cuộn + chọn text input */
+        #victoryScreen, #gameOverScreen, #storyModal, #startScreen {
+            touch-action: pan-y;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+        #victoryScreen input, #victoryScreen button,
+        #gameOverScreen button, #storyModal button, #startScreen button {
+            touch-action: manipulation;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #playerNameInput {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            pointer-events: auto !important;
+        }
+        #certificateCard {
+            max-height: none;
+            padding-bottom: 2rem;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #090a14; }
+        ::-webkit-scrollbar-thumb { background: #22d3ee; border-radius: 4px; }
+
+        /* Giảm hiệu ứng nặng trên mobile */
+        @media (max-width: 768px) {
+            .neon-cyan, .neon-gold, .neon-red { text-shadow: none; }
+            .box-glow-cyan, .box-glow-gold { box-shadow: none; }
+            #certificateCard { padding: 1rem !important; }
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-[#090a14]">
+
+    <!-- Nút điều khiển Âm thanh -->
+    <button id="soundToggleBtn" class="fixed top-4 right-4 z-50 p-3 rounded-full bg-slate-900/80 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-950/80 transition shadow-lg backdrop-blur-md" title="Bật/Tắt Âm Thanh">
+        <svg id="soundOnIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+        </svg>
+        <svg id="soundOffIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+        </svg>
+    </button>
+
+    <!-- HUD (Hiển thị trong lúc chơi) -->
+    <div id="gameHud" class="hidden fixed top-0 left-0 w-full p-3 sm:p-4 z-30 pointer-events-none flex flex-col gap-2 max-w-4xl mx-auto right-0">
+        <div class="flex items-center justify-between gap-2 bg-slate-950/75 border border-cyan-500/30 rounded-2xl p-3 backdrop-blur-md shadow-xl">
+            <!-- Thông tin Cảnh giới -->
+            <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                    <span id="stageBadge" class="px-2.5 py-0.5 text-xs font-code font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">TẦNG 1/4</span>
+                    <span id="timerDisplay" class="text-xs font-code text-slate-400">00:00</span>
+                </div>
+                <h2 id="realmTitle" class="text-base sm:text-xl font-cultivation font-extrabold text-cyan-300 neon-cyan mt-0.5">LUYỆN KHÍ KỲ</h2>
+                <p id="realmSub" class="text-[11px] sm:text-xs font-code text-slate-400">Năm 1: Nhập môn C/C++</p>
+            </div>
+
+            <!-- Thanh Sinh Mệnh (Tâm Ma / HP) & Tu Vi -->
+            <div class="flex flex-col gap-2 w-1/2 sm:w-64 pr-10 sm:pr-12">
+                <!-- HP Bar -->
+                <div>
+                    <div class="flex justify-between text-[11px] font-code mb-0.5">
+                        <span class="text-rose-400 font-bold">ĐẠO TÂM (HP)</span>
+                        <span id="hpText" class="text-rose-300">100%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-rose-500/30">
+                        <div id="hpBar" class="h-full bg-gradient-to-r from-rose-600 to-pink-500 transition-all duration-200" style="width: 100%"></div>
+                    </div>
+                </div>
+                <!-- Cultivation Progress Bar -->
+                <div>
+                    <div class="flex justify-between text-[11px] font-code mb-0.5">
+                        <span id="xpLabel" class="text-cyan-400 font-bold">LINH LỰC TU VI</span>
+                        <span id="xpText" class="text-cyan-300">0%</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-cyan-500/30">
+                        <div id="xpBar" class="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-amber-300 transition-all duration-200" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Combo + Tâm Pháp -->
+        <div class="flex items-center justify-between gap-2 pointer-events-none">
+            <div id="comboBox" class="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-amber-500/40 text-amber-300 font-code text-xs font-bold backdrop-blur-md">
+                COMBO <span id="comboText">0</span>
+            </div>
+            <div id="skillBox" class="hidden px-3 py-1.5 rounded-xl bg-cyan-950/80 border border-cyan-400/50 text-cyan-200 font-code text-xs font-bold backdrop-blur-md">
+                <span id="skillNameText">—</span>
+            </div>
+        </div>
+
+        <!-- Thông báo Boss / Đột phá nổi -->
+        <div id="bannerAlert" class="hidden mx-auto mt-1 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/60 text-amber-300 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg animate-bounce">
+            ⚡ THIÊN KIẾP GIÁNG LÂM! HÃY NÉ TRÁNH CÁC LỖI HỆ THỐNG!
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH 1: START SCREEN -->
+    <div id="startScreen" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#090a14]/90 backdrop-blur-md overflow-y-auto">
+        <div class="max-w-xl w-full bg-slate-950/90 border border-cyan-500/40 rounded-3xl p-6 sm:p-8 text-center box-glow-cyan relative my-auto">
+            <!-- Trang trí góc (không dùng overflow-hidden để tránh cắt chữ) -->
+            <div class="absolute -top-16 -left-16 w-36 h-36 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-16 -right-16 w-40 h-40 bg-amber-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="inline-block px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 font-code text-xs font-semibold mb-4">
+                CODE THE THANKS 2026 • ĐẠI HỌC TÂY NGUYÊN
+            </div>
+
+            <h1 class="title-dokiep text-3xl sm:text-5xl font-cultivation font-extrabold py-2 px-2 sm:px-4">
+                ĐỘ KIẾP CODE
+            </h1>
+            <p class="text-sm sm:text-base font-cultivation tracking-wide text-amber-400 font-bold mt-1 mb-5 px-2">
+                TỪ LUYỆN KHÍ ĐẾN ĐẠI THỪA
+            </p>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 text-left space-y-2.5 mb-6 text-xs sm:text-sm text-slate-300">
+                <p class="leading-relaxed">
+                    Nhập vai <span class="text-cyan-400 font-bold">Đạo Hữu Coder</span> cưỡi bồ đoàn công nghệ, vượt qua 4 tầng thiên kiếp từ năm nhất đến đồ án tốt nghiệp để đắc đạo thành chính quả!
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-code text-xs">
+                    <div class="flex items-center gap-2 bg-cyan-950/40 border border-cyan-500/30 p-2 rounded-xl">
+                        <span class="text-lg">💠</span>
+                        <span>Hấp thụ <b class="text-cyan-300">Linh Khí Code</b> để tăng Tu Vi</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-rose-950/40 border border-rose-500/30 p-2 rounded-xl">
+                        <span class="text-lg">⚡</span>
+                        <span>Né tránh <b class="text-rose-400">Huyết Lôi Bug</b> bảo vệ Đạo Tâm</span>
+                    </div>
+                </div>
+                <p class="text-center text-xs text-slate-400 pt-1 font-code">
+                    [Điều khiển: Di chuột hoặc Vuốt/Chạm màn hình để dịch chuyển]
+                </p>
+            </div>
+
+            <button id="startBtn" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-teal-400 to-amber-400 text-slate-950 font-extrabold text-base sm:text-lg tracking-wider shadow-lg shadow-cyan-500/30 hover:scale-[1.02] active:scale-95 transition transform cursor-pointer">
+                ⚔️ BẮT ĐẦU TU LUYỆN
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH TẠM DỪNG KHI ĐẠO TÂM VỠ (GAME OVER) -->
+    <div id="gameOverScreen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-[#090a14]/90 backdrop-blur-md">
+        <div class="max-w-md w-full bg-slate-950/95 border border-rose-500/50 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
+            <div class="text-5xl mb-3">💥</div>
+            <h2 class="text-2xl sm:text-3xl font-cultivation font-extrabold text-rose-400 neon-red mb-2">
+                TẨU HỎA NHẬP MA!
+            </h2>
+            <p id="failReason" class="text-sm text-slate-300 font-code mb-5 leading-relaxed whitespace-pre-line">
+                Đạo hữu đã gục ngã trước thiên kiếp Bug & Deadline tại cảnh giới Luyện Khí Kỳ.
+            </p>
+            <div class="bg-slate-900/90 rounded-2xl p-3 mb-6 border border-slate-800 font-code text-xs text-slate-400">
+                "Thất bại là mẹ thành công, fix bug là nghề của Coder. Hãy điều tức linh lực và độ kiếp lại!"
+            </div>
+            <button id="retryBtn" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 text-slate-950 font-extrabold text-base tracking-wide hover:scale-[1.02] active:scale-95 transition cursor-pointer">
+                🔄 TÁI TẠO LINH CĂN (CHƠI LẠI)
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH HỘI THOẠI CỐT TRUYỆN (STORY DIALOGUE MODAL) -->
+    <div id="storyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090a14]/92 backdrop-blur-md">
+        <div class="max-w-xl w-full bg-slate-950/95 border-2 border-cyan-500/60 rounded-3xl p-6 sm:p-8 text-left box-glow-cyan relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="flex items-center gap-3 mb-4 border-b border-cyan-500/30 pb-3">
+                <span id="storySpeakerAvatar" class="text-3xl">🧙‍♂️</span>
+                <div>
+                    <h3 id="storySpeakerName" class="text-base sm:text-lg font-cultivation font-bold text-cyan-300">Đạo Hữu Coder</h3>
+                    <p id="storySpeakerRole" class="text-xs font-code text-slate-400">Năm 1: Chân ướt chân ráo bước vào tông môn</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-6 min-h-[90px] flex items-center">
+                <p id="storyDialogueText" class="text-xs sm:text-sm font-code text-slate-200 leading-relaxed">
+                    "Hôm nay là ngày đầu nhập môn Khoa CNTT, nghe bảo môn C/C++ gắt lắm, không khéo là tẩu hỏa nhập ma..."
+                </p>
+            </div>
+
+            <button id="storyNextBtn" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-cyan-500/30 hover:scale-[1.02] active:scale-95 transition cursor-pointer flex items-center justify-center gap-2">
+                <span>⚔️ TIẾP TỤC HÀNH TRÌNH</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH KẾT THÚC: CHỨNG NHẬN ĐỘ KIẾP & TRI ÂN 20/11 -->
+    <div id="victoryScreen" class="hidden fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-5 bg-[#090a14]/85 backdrop-blur-md overflow-y-auto">
+        <div id="certificateCard" class="max-w-2xl w-full bg-gradient-to-b from-slate-950 via-[#0d1124] to-slate-950 border-2 border-amber-400/70 rounded-3xl p-5 sm:p-8 text-center box-glow-gold relative my-auto">
+            <!-- Hoa văn góc vàng kim -->
+            <div class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-400 rounded-tl-lg"></div>
+            <div class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-400 rounded-tr-lg"></div>
+            <div class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-400 rounded-bl-lg"></div>
+            <div class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-amber-400 rounded-br-lg"></div>
+
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 font-code text-xs font-bold mb-2">
+                <span>🏆</span> PHI THĂNG THÀNH CÔNG • 20/11/2026
+            </div>
+
+            <h2 class="text-xl sm:text-3xl font-cultivation font-extrabold text-amber-300 neon-gold tracking-wide">
+                CHỨNG NHẬN ĐỘ KIẾP THÀNH CÔNG
+            </h2>
+            <p class="text-xs sm:text-sm font-code text-cyan-300 font-bold mt-1">
+                CẢNH GIỚI: ĐẠI THỪA FULL-STACK TIÊN TÔN
+            </p>
+
+            <!-- Thống kê thành tích -->
+            <div class="grid grid-cols-3 gap-2 sm:gap-3 my-4 bg-slate-900/80 border border-amber-500/30 rounded-2xl p-3 font-code">
+                <div>
+                    <div class="text-[10px] sm:text-xs text-slate-400">THỜI GIAN ĐỘ KIẾP</div>
+                    <div id="finalTime" class="text-sm sm:text-lg font-bold text-amber-300">00:45</div>
+                </div>
+                <div class="border-x border-slate-800">
+                    <div class="text-[10px] sm:text-xs text-slate-400">LINH KHÍ HẤP THỤ</div>
+                    <div id="finalScore" class="text-sm sm:text-lg font-bold text-cyan-300">1,250</div>
+                </div>
+                <div>
+                    <div class="text-[10px] sm:text-xs text-slate-400">BÍ KÍP LĨNH NGỘ</div>
+                    <div id="finalSecret" class="text-sm sm:text-lg font-bold text-emerald-400">—</div>
+                </div>
+            </div>
+
+            <!-- Lời Tri Ân 20/11 -->
+            <div class="bg-gradient-to-br from-amber-950/30 via-slate-900/90 to-cyan-950/30 border border-amber-400/40 rounded-2xl p-4 sm:p-5 text-left space-y-2.5 mb-5 relative">
+                <div class="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                    <span class="font-cultivation font-bold text-amber-300 text-sm sm:text-base">📜 MẬT TỊCH TRI ÂN NGÀY 20/11</span>
+                    <span class="font-code text-[11px] text-cyan-400">Khoa CNTT - ĐH Tây Nguyên</span>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    Từ những dòng <code class="text-cyan-300 bg-slate-800 px-1 rounded">#include</code> vỡ lòng đến thiên kiếp Hội đồng — hành trình ấy chưa bao giờ dễ dàng. Nếu không có sự chỉ dẫn của <b class="text-amber-300">Quý Thầy Cô Khoa CNTT - Đại học Tây Nguyên</b>, có lẽ chúng em đã gục ngã giữa biển bug và deadline.
+                </p>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    Cảm ơn Thầy Cô đã là những <b class="text-cyan-300">"Debugger Tối Cao"</b>, truyền cho chúng em không chỉ kiến thức mà cả đạo tâm để đứng vững. Độ kiếp lần này đã qua… nhưng phía trước vẫn còn những ngọn núi cao hơn: việc làm, sản phẩm thật, trách nhiệm lớn hơn.
+                </p>
+                <p class="text-xs sm:text-sm text-amber-200 leading-relaxed font-bold mt-1">
+                    “Cảm ơn Sư Tôn đã chỉ đường, khai khiếu và không bỏ rơi chúng đệ tử giữa biển bug. Không có Thầy Cô, e rằng đạo tâm đã vỡ từ lâu.”
+                </p>
+                <div id="lessonsSummary" class="mt-2 pt-2 border-t border-amber-500/20 text-[11px] sm:text-xs font-code text-slate-300 space-y-1">
+                    <!-- Điền bằng JS: các bài học đã dùng trong run -->
+                </div>
+            </div>
+
+            <!-- Gửi điểm lên bảng xếp hạng -->
+            <div id="submitScoreBox" class="mb-4 text-left">
+                <label class="block text-[11px] font-code text-amber-300/90 mb-1.5">Đạo hiệu (tên hiển thị trên BXH)</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input id="playerNameInput" type="text" maxlength="16" placeholder="VD: DaoHuu_CNTT" class="flex-1 px-3 py-2.5 rounded-xl bg-slate-900 border border-amber-500/40 text-slate-100 font-code text-sm focus:outline-none focus:border-amber-400" />
+                    <button id="submitScoreBtn" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/25 hover:scale-[1.02] active:scale-95 transition cursor-pointer">
+                        🏆 GỬI ĐIỂM
+                    </button>
+                </div>
+                <p id="submitStatus" class="mt-1.5 text-[11px] font-code text-slate-400"></p>
+            </div>
+
+            <!-- Bảng xếp hạng -->
+            <div class="mb-4 bg-slate-900/90 border border-cyan-500/30 rounded-2xl p-3 text-left">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-bold text-cyan-300 text-sm">🏆 BẢNG XẾP HẠNG ĐỘ KIẾP</span>
+                    <button id="refreshLbBtn" class="text-[11px] font-code text-slate-400 hover:text-cyan-300">Làm mới</button>
+                </div>
+                <div id="leaderboardList" class="space-y-1.5 max-h-48 overflow-y-auto font-code text-xs sm:text-sm">
+                    <div class="text-slate-500 text-center py-3">Đang tải...</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="playAgainBtn" class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-extrabold text-sm sm:text-base shadow-lg shadow-cyan-500/25 hover:scale-[1.02] active:scale-95 transition cursor-pointer flex items-center justify-center gap-2">
+                    <span>⚔️</span> ĐỘ KIẾP LẦN NỮA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS CHÍNH CỦA TRÒ CHƠI -->
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        /**
+         * ============================================================================
+         * HỆ THỐNG ÂM THANH TỔNG HỢP (WEB AUDIO API) - KHÔNG CẦN FILE NGOÀI
+         * ============================================================================
+         */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.bgmInterval = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (this.muted) {
+                    this.stopBGM();
+                }
+                return this.muted;
+            }
+
+            // Tiếng hấp thụ Linh Khí (trong trẻo, vang vọng)
+            playCollect(combo = 1) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    const baseFreq = 520 + Math.min(combo * 35, 450);
+                    osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, this.ctx.currentTime + 0.14);
+
+                    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.16);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.16);
+                } catch (e) {}
+            }
+
+            // Tiếng trúng Thiên Kiếp / Bug (trầm đục, rè điện)
+            playHit() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.25);
+
+                    gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.26);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.26);
+                } catch (e) {}
+            }
+
+            // Tiếng Đột Phá Cảnh Giới (hợp âm vang rền hùng tráng)
+            playBreakthrough() {
+                if (this.muted || !this.ctx) return;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C major pentatonic
+                notes.forEach((freq, idx) => {
+                    setTimeout(() => {
+                        if (this.muted || !this.ctx) return;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
+
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + 0.6);
+                    }, idx * 75);
+                });
+            }
+
+            // Nhạc nền ngũ cung cổ phong nhẹ nhàng khi Phi Thăng / Tri Ân
+            startGratitudeBGM() {
+                this.stopBGM();
+                if (this.muted || !this.ctx) return;
+                // Thang âm ngũ cung (C4, D4, E4, G4, A4, C5, D5, E5)
+                const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+                let step = 0;
+                const pattern = [0, 2, 4, 5, 4, 2, 3, 1, 0, 4, 5, 7, 5, 4, 2, 3];
+
+                this.bgmInterval = setInterval(() => {
+                    if (this.muted || !this.ctx) return;
+                    const freq = scale[pattern[step % pattern.length]];
+                    step++;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0008, this.ctx.currentTime + 0.85);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.85);
+                }, 480);
+            }
+
+            stopBGM() {
+                if (this.bgmInterval) {
+                    clearInterval(this.bgmInterval);
+                    this.bgmInterval = null;
+                }
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        /**
+         * ============================================================================
+         * DỮ LIỆU CÁC CẢNH GIỚI TU LUYỆN (4 GIAI ĐOẠN)
+         * ============================================================================
+         */
+        const STAGES = [
+            {
+                id: 1,
+                badge: "TẦNG 1/4",
+                name: "LUYỆN KHÍ KỲ",
+                sub: "Bài học: Nhận ra lỗi cơ bản C/C++",
+                lesson: "Nhận ra lỗi cơ bản (syntax, thiếu dấu ;, vòng lặp vô hạn…)",
+                color: "#22d3ee",
+                targetXP: 200,
+                spawnRate: 0.032,
+                speedMult: 0.9,
+                goodRatio: 0.64,
+                goodItems: ["#include", "int main()", "return 0;", "printf()", "for(i=0)", "pointer*"],
+                badItems: ["Missing ;", "SegFault", "Infinite Loop", "Syntax Error", "Bug Đỏ"],
+                dialogue: {
+                    speaker: "Đạo Hữu Coder",
+                    role: "Sơ nhập · Năm nhất C/C++",
+                    text: "“Ngày đầu vào tông môn, chân khí còn mỏng. Chỉ thiếu một dấu chấm phẩy cũng khiến chương trình loạn. Sư tôn dạy: hãy đọc kỹ từng dòng — lỗi nhỏ hôm nay chính là bài học lớn.”"
+                },
+                memories: [
+                    { speaker: "Sư Tôn Khai Môn", quote: "“Đừng sợ lỗi. Mỗi lỗi chính là bài học đang dạy ngươi.”" },
+                    { speaker: "Sư Tôn Khai Môn", quote: "“Gõ chậm không sao. Quan trọng là phải hiểu mình đang viết gì.”" }
+                ],
+                quizzes: [
+                    { q: "Thiếu gì khiến C/C++ báo lỗi ngay?", correct: "Dấu ;", wrong: ["Dấu #", "Dấu @"] },
+                    { q: "Hàm bắt đầu chương trình C?", correct: "main()", wrong: ["start()", "run()"] },
+                    { q: "In ra màn hình trong C?", correct: "printf()", wrong: ["echo()", "print()"] }
+                ]
+            },
+            {
+                id: 2,
+                badge: "TẦNG 2/4",
+                name: "TRÚC CƠ KỲ",
+                sub: "Bài học: Cấu trúc dữ liệu & độ phức tạp",
+                lesson: "Hiểu cấu trúc dữ liệu và độ phức tạp thuật toán",
+                color: "#34d399",
+                targetXP: 280,
+                spawnRate: 0.048,
+                speedMult: 1.2,
+                goodRatio: 0.55,
+                goodItems: ["O(1)", "Binary Tree", "QuickSort", "DP Table", "HashMap", "BFS / DFS"],
+                badItems: ["O(n!)", "Stack Overflow", "Null Pointer", "TLE Timeout", "Memory Leak"],
+                dialogue: {
+                    speaker: "Đạo Hữu Coder",
+                    role: "Trúc cơ · Cấu trúc dữ liệu & Giải thuật",
+                    text: "“Cây nhị phân, đệ quy, O(n)… không chỉ học thuộc. Sư tôn nhấn: phải hiểu vì sao thuật toán chạy, khi nào nhanh, khi nào chậm.”"
+                },
+                memories: [
+                    { speaker: "Trưởng Lão Thuật Số", quote: "“Thuật toán không phải để học thuộc. Hãy hiểu tại sao nó chạy được.”" },
+                    { speaker: "Trưởng Lão Thuật Số", quote: "“Code chạy được chỉ là nhập môn. Code đẹp và tối ưu mới là chính đạo.”" }
+                ],
+                quizzes: [
+                    { q: "Tra cứu trung bình HashMap?", correct: "O(1)", wrong: ["O(n!)", "O(n²)"] },
+                    { q: "Duyệt cây theo tầng dùng?", correct: "BFS", wrong: ["Chỉ đệ quy", "O(n!)"] },
+                    { q: "Sắp xếp nhanh phổ biến?", correct: "QuickSort", wrong: ["SleepSort", "RandomSort"] }
+                ]
+            },
+            {
+                id: 3,
+                badge: "TẦNG 3/4",
+                name: "KIM ĐAN KỲ",
+                sub: "Bài học: Hệ thống, debug & deadline",
+                lesson: "Nghĩ hệ thống, debug và làm chủ deadline",
+                color: "#a78bfa",
+                targetXP: 360,
+                spawnRate: 0.062,
+                speedMult: 1.45,
+                goodRatio: 0.48,
+                goodItems: ["INDEX", "Clean Code", "ACID", "Docker", "REST API", "Git Merge"],
+                badItems: ["DROP TABLE", "Deadlock", "500 Error", "Deadline 23:59", "Merge Conflict"],
+                dialogue: {
+                    speaker: "Đạo Hữu Coder",
+                    role: "Kết đan · Hệ thống & Cơ sở dữ liệu",
+                    text: "“Deadlock, log lỗi, deadline sát nút… Sư tôn dạy: đừng hoảng. Đọc log, nghĩ từng tầng, giữ Clean Code — đó là cách không bị tâm ma nuốt chửng.”"
+                },
+                memories: [
+                    { speaker: "Sư Tôn Hệ Thống", quote: "“Khi hệ thống lỗi, đừng hoảng. Hãy lần theo log và suy nghĩ từng bước.”" },
+                    { speaker: "Sư Tôn Dữ Liệu", quote: "“Clean Code không chỉ đẹp. Nó giúp người sau (kể cả chính mình) hiểu được.”" }
+                ],
+                quizzes: [
+                    { q: "Hai tiến trình chờ nhau mãi là?", correct: "Deadlock", wrong: ["Index", "Cache hit"] },
+                    { q: "API kiểu tài nguyên phổ biến?", correct: "REST API", wrong: ["DROP TABLE", "SegFault"] },
+                    { q: "Giúp query nhanh hơn?", correct: "INDEX", wrong: ["Deadline", "Merge Conflict"] }
+                ]
+            },
+            {
+                id: 4,
+                badge: "TẦNG 4/4 • ĐỘ KIẾP",
+                name: "ĐỘ KIẾP KỲ",
+                sub: "Bài học: Vấn đáp — chứng minh đã học",
+                lesson: "Vấn đáp Hội đồng: chứng minh mình đã học được gì",
+                color: "#facc15",
+                bossDuration: 22.0,
+                bossAttacks: [
+                    "Scale thế nào?",
+                    "Logic có sơ hở!",
+                    "Tối ưu lại đi!",
+                    "Clean Code chưa?",
+                    "Bảo mật đâu?",
+                    "Demo chân thực!",
+                    "DB chuẩn hóa chưa?"
+                ],
+                // Đáp án đúng khi Hội đồng "hỏi thật" — chạm vào = điểm đạo
+                bossAnswers: [
+                    { correct: "Phân tầng + cache", wrong: ["Hardcode tất cả", "Bỏ qua scale"] },
+                    { correct: "Viết test + review", wrong: ["Chỉ demo happy path", "Không cần test"] },
+                    { correct: "Chuẩn hóa DB", wrong: ["Một bảng chứa hết", "Không cần khóa"] },
+                    { correct: "Clean Code", wrong: ["Copy-paste cho nhanh", "Tên biến a,b,c"] }
+                ],
+                dialogue: {
+                    speaker: "Lão Tổ Hội Đồng",
+                    role: "Thiên kiếp cuối · Vấn đáp đồ án",
+                    text: "“Thiên kiếp cuối đã tới. Hội Đồng sẽ hỏi logic, tối ưu, bảo mật… Né chỉ giúp sống sót. Trả lời đúng mới chứng minh bốn năm không uổng công.”"
+                },
+                memories: [
+                    { speaker: "Lão Tổ", quote: "“Em đã đi được rất xa rồi. Hãy tin vào những gì mình đã học.”" },
+                    { speaker: "Lão Tổ", quote: "“Bug không đáng sợ. Đáng sợ là bỏ cuộc trước khi tìm ra nguyên nhân.”" },
+                    { speaker: "Lão Tổ", quote: "“Thầy không cần em hoàn hảo. Chỉ cần em không bỏ cuộc.”" }
+                ]
+            }
+        ];
+
+        // ========== TÂM PHÁP (Kỹ năng tu tiên) ==========
+        const TAM_PHAP = [
+            {
+                id: "ho_the",
+                name: "Hộ Thể Chân Khí",
+                desc: "Bất tử ngắn + giảm sát thương",
+                duration: 3.2,
+                color: "#67e8f9"
+            },
+            {
+                id: "hap_tinh",
+                name: "Hấp Tinh Quyết",
+                desc: "Hút linh khí xung quanh",
+                duration: 4.0,
+                color: "#fde68a"
+            },
+            {
+                id: "dinh_than",
+                name: "Định Thần Phù",
+                desc: "Làm chậm toàn bộ thiên kiếp",
+                duration: 3.5,
+                color: "#c4b5fd"
+            }
+        ];
+
+        /**
+         * ============================================================================
+         * KHỞI TẠO CANVAS & BIẾN TRẠNG THÁI GAME
+         * ============================================================================
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+
+        const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+            (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches);
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            if (canvas) {
+                // Giữ nét: dùng DPR thật, không kéo giãn canvas độ phân giải thấp
+                const dpr = Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.25 : 2);
+                canvas.width = Math.floor(width * dpr);
+                canvas.height = Math.floor(height * dpr);
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+                const ctx2 = canvas.getContext('2d');
+                if (ctx2) ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+            if (typeof player !== 'undefined' && player) {
+                player.y = Math.min(player.y, height - 70);
+                player.x = Math.max(40, Math.min(width - 40, player.x));
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Các trạng thái game: 'START', 'PLAYING', 'BOSS_FIGHT', 'BOSS_TWIST', 'MEMORY', 'VICTORY', 'GAMEOVER'
+        let gameState = 'START';
+        let currentStageIdx = 0;
+        let hp = 100;
+        let xp = 0;
+        let score = 0;
+        let combo = 0;
+        let startTime = 0;
+        let elapsedSeconds = 0;
+        let shakeTime = 0;
+        let flashAlpha = 0;
+        let flashColor = '#ffffff';
+
+        // Hệ thống Hồi ức Thầy Cô (khi Đạo Tâm gần cạn)
+        let memoryActive = false;
+        let memoryTimer = 0;
+        let memoryTriggered = [false, false, false, false]; // mỗi tầng chỉ kích hoạt 1 lần
+        let memoryQuote = "";
+        let memorySpeaker = "";
+        let memoryAlpha = 0;
+
+        // Hệ thống Combo & Tâm Pháp
+        let maxCombo = 0;
+        let activeSkill = null;
+        let skillTimer = 0;
+        let skillReady = true;
+        let pendingSkillId = null;
+        let timeScale = 1;
+
+        // Hệ thống Câu hỏi kiến thức + bài học đã dùng
+        let quizCooldown = 8;
+        let lessonsLearned = [];
+        let correctAnswers = 0;
+        let lastQuiz = null; // hiện đáp án đúng khi hết máu
+
+        // Chữ chạy lời thầy (đoạn cuối kiếp)
+        let floatingQuotes = [];
+        let usedTeacherQuotes = new Set();
+
+        // Biến dành riêng cho Giai đoạn 4 (Boss Mentor & Twist)
+        let bossTimer = 22.0;
+        const BOSS_DURATION = 22.0;
+        let twistProgress = 0; // 0 -> 1 trong quá trình truyền thụ bí kíp
+        let bossEntity = {
+            x: 0,
+            y: 130,
+            targetY: 135,
+            radius: 46,
+            attackCooldown: 0,
+            quote: "Hãy cho ta thấy thành quả tu luyện của ngươi!"
+        };
+
+        // Nhân vật chính: Đạo Hữu Coder
+        const player = {
+            x: width / 2,
+            y: height - 110,
+            targetX: width / 2,
+            targetY: height - 110,
+            radius: 26,
+            invulnTimer: 0,
+            auraAngle: 0
+        };
+
+        // Danh sách các thực thể bay trên màn hình
+        let fallingItems = [];
+        let particles = [];
+        let floatingTexts = [];
+        let bgStars = [];
+        let bgMatrixCols = [];
+        const isMobile = isMobileDevice;
+
+        // Desktop dày hơn vừa phải; tránh tạo quá nhiều vật phẩm gây lag.
+        function densityMult() {
+            if (isMobile) return 1;
+            return Math.min(1.25, 1.1 + Math.max(0, width - 800) / 2500);
+        }
+
+        // Khởi tạo nền sao & ma trận (ít hơn trên mobile)
+        function initBackground() {
+            bgStars = [];
+            const starCount = isMobile ? 22 : 55;
+            for (let i = 0; i < starCount; i++) {
+                bgStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 0.5 + 0.15,
+                    alpha: Math.random() * 0.6 + 0.2
+                });
+            }
+            bgMatrixCols = [];
+            if (!isMobile) {
+                const cols = Math.floor(width / 32);
+                const runes = ['0', '1', '道', '法', '码', '仙', '{ }', '/>', 'λ', '⚡'];
+                for (let i = 0; i < cols; i++) {
+                    bgMatrixCols.push({
+                        x: i * 32 + 10,
+                        y: Math.random() * height,
+                        speed: Math.random() * 1.0 + 0.3,
+                        char: runes[Math.floor(Math.random() * runes.length)],
+                        alpha: Math.random() * 0.12 + 0.03
+                    });
+                }
+            }
+        }
+
+        /**
+         * ============================================================================
+         * ĐIỀU KHIỂN CHUỘT & CẢM ỨNG (MOBILE + PC)
+         * ============================================================================
+         */
+        let isPointerDown = false;
+
+        function updatePlayerTarget(clientX, clientY) {
+            if (gameState !== 'PLAYING' && gameState !== 'BOSS_FIGHT') return;
+            player.targetX = Math.max(35, Math.min(width - 35, clientX));
+            // Cho phép di chuyển tự do ở nửa dưới màn hình
+            const minY = height * 0.42;
+            const maxY = height - 55;
+            player.targetY = Math.max(minY, Math.min(maxY, clientY));
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            updatePlayerTarget(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            isPointerDown = true;
+            if (e.touches.length > 0) {
+                updatePlayerTarget(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                updatePlayerTarget(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            isPointerDown = false;
+        });
+
+        /**
+         * ============================================================================
+         * QUẢN LÝ LUỒNG TRÒ CHƠI & CHUYỂN CẢNH GIỚI
+         * ============================================================================
+         */
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const victoryScreen = document.getElementById('victoryScreen');
+        const storyModal = document.getElementById('storyModal');
+        const gameHud = document.getElementById('gameHud');
+        const bannerAlert = document.getElementById('bannerAlert');
+
+        function startGame() {
+            sound.init();
+            sound.stopBGM();
+            sound.playBreakthrough();
+            if (canvas) canvas.style.pointerEvents = 'auto';
+
+            resizeCanvas();
+            initBackground();
+
+            currentStageIdx = 0;
+            hp = 100;
+            xp = 0;
+            score = 0;
+            combo = 0;
+            startTime = Date.now();
+            elapsedSeconds = 0;
+
+            // Reset hệ thống Hồi ức
+            memoryActive = false;
+            memoryTimer = 0;
+            memoryTriggered = [false, false, false, false];
+            memoryQuote = "";
+            memorySpeaker = "";
+            memoryAlpha = 0;
+
+            // Reset Combo & Tâm Pháp
+            combo = 0;
+            maxCombo = 0;
+            activeSkill = null;
+            skillTimer = 0;
+            skillReady = true;
+            pendingSkillId = null;
+            timeScale = 1;
+
+            // Reset kiến thức
+            quizCooldown = 6;
+            lessonsLearned = [];
+            correctAnswers = 0;
+            lastQuiz = null;
+            floatingQuotes = [];
+
+            player.x = width / 2;
+            player.y = height - 110;
+            player.targetX = width / 2;
+            player.targetY = height - 110;
+            player.invulnTimer = 0;
+
+            fallingItems = [];
+            particles = [];
+            floatingTexts = [];
+
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            victoryScreen.classList.add('hidden');
+            storyModal.classList.add('hidden');
+
+            // Hiển thị cốt truyện mở đầu của Tầng 1 trước khi bắt đầu chơi
+            showStoryDialogue(currentStageIdx, () => {
+                gameHud.classList.remove('hidden');
+                bannerAlert.classList.add('hidden');
+                gameState = 'PLAYING';
+                updateHUD();
+            });
+        }
+
+        function showStoryDialogue(stageIdx, onComplete) {
+            gameState = 'STORY';
+            const stage = STAGES[stageIdx];
+            document.getElementById('storySpeakerName').textContent = stage.dialogue.speaker;
+            document.getElementById('storySpeakerRole').textContent = stage.dialogue.role;
+            document.getElementById('storyDialogueText').textContent = stage.dialogue.text;
+            storyModal.classList.remove('hidden');
+
+            // Gắn sự kiện nút bấm tiếp tục cốt truyện
+            const nextBtn = document.getElementById('storyNextBtn');
+            // Clone nút để tránh gắn nhiều listener chồng chéo
+            const newBtn = nextBtn.cloneNode(true);
+            nextBtn.parentNode.replaceChild(newBtn, nextBtn);
+
+            newBtn.addEventListener('click', () => {
+                storyModal.classList.add('hidden');
+                if (onComplete) onComplete();
+            });
+        }
+
+        function updateHUD() {
+            const stage = STAGES[currentStageIdx];
+            document.getElementById('stageBadge').textContent = stage.badge;
+            document.getElementById('realmTitle').textContent = stage.name;
+            document.getElementById('realmTitle').style.color = stage.color;
+            document.getElementById('realmSub').textContent = stage.sub;
+
+            const hpClamped = Math.max(0, Math.min(100, Math.round(hp)));
+            document.getElementById('hpText').textContent = `${hpClamped}%`;
+            document.getElementById('hpBar').style.width = `${hpClamped}%`;
+
+            if (stage.id < 4) {
+                const pct = Math.min(100, Math.round((xp / stage.targetXP) * 100));
+                document.getElementById('xpLabel').textContent = "LINH LỰC TU VI";
+                document.getElementById('xpText').textContent = `${pct}%`;
+                document.getElementById('xpBar').style.width = `${pct}%`;
+            } else {
+                const pct = Math.max(0, Math.min(100, Math.round(((BOSS_DURATION - bossTimer) / BOSS_DURATION) * 100)));
+                document.getElementById('xpLabel').textContent = "TIẾN ĐỘ ĐỘ KIẾP";
+                document.getElementById('xpText').textContent = `${pct}%`;
+                document.getElementById('xpBar').style.width = `${pct}%`;
+            }
+        }
+
+        function advanceStage() {
+            // Ghi nhận bài học tầng vừa hoàn thành
+            const prev = STAGES[currentStageIdx];
+            if (prev && prev.lesson && !lessonsLearned.includes(prev.lesson)) {
+                lessonsLearned.push(prev.lesson);
+            }
+
+            currentStageIdx++;
+            xp = 0;
+            quizCooldown = 5;
+            sound.playBreakthrough();
+            flashColor = STAGES[currentStageIdx].color;
+            flashAlpha = 0.45;
+            shakeTime = 0.35;
+
+            hp = Math.min(100, hp + 20);
+            fallingItems = fallingItems.filter(item => item.isGood);
+
+            spawnFloatingText(player.x, player.y - 50, `ĐỘT PHÁ: ${STAGES[currentStageIdx].name}!`, STAGES[currentStageIdx].color, 20);
+
+            // Hiển thị đoạn hội thoại cốt truyện trước khi bước vào cảnh giới mới
+            showStoryDialogue(currentStageIdx, () => {
+                if (currentStageIdx === 3) {
+                    gameState = 'BOSS_FIGHT';
+                    bossTimer = BOSS_DURATION;
+                    bossEntity.x = width / 2;
+                    bossEntity.y = -80;
+                    bossEntity.targetY = Math.max(145, height * 0.22);
+                    bossEntity.attackCooldown = 0.5;
+                    bossEntity._quotePhase = -1;
+                    const startQuotes = [
+                        "Hội đồng bắt đầu — không còn đường lui!",
+                        "Hãy cho ta thấy thành quả bốn năm.",
+                        "Vấn đáp khởi — đứng vững lên!",
+                        "Thiên kiếp cuối đã giáng lâm."
+                    ];
+                    bossEntity.quote = startQuotes[Math.floor(Math.random() * startQuotes.length)];
+
+                    const startBanners = [
+                        "⚠️ THIÊN KIẾP HỘI ĐỒNG! CÂU HỎI DỒN DẬP — HÃY GIỮ ĐẠO TÂM!",
+                        "⚠️ HỘI ĐỒNG XUẤT HIỆN — NÉ VÀ TỰ TÌM ĐÁP ÁN!",
+                        "⚠️ ẢI CUỐI: VẤN ĐÁP ĐỒ ÁN — ĐỪNG ĐỔ VỠ ĐẠO TÂM!"
+                    ];
+                    bannerAlert.textContent = startBanners[Math.floor(Math.random() * startBanners.length)];
+                    bannerAlert.classList.remove('hidden');
+                } else {
+                    gameState = 'PLAYING';
+                }
+                updateHUD();
+            });
+        }
+
+        function spawnTeacherQuoteStorm() {
+            // Lời thầy cô chạy ngang — vùng giữa màn hình, to và rõ trên mobile
+            const quotes = new Set();
+            STAGES.forEach(s => {
+                if (s.memories) s.memories.forEach(m => quotes.add(`${m.speaker}: ${m.quote}`));
+            });
+            [
+                "Đừng bỏ cuộc trước khi tìm ra nguyên nhân.",
+                "Clean Code giúp chính mình sau này.",
+                "Núi này đã vượt — núi sau còn chờ.",
+                "Thầy không cần hoàn hảo, chỉ cần không bỏ cuộc.",
+                "Đọc log. Nghĩ từng bước. Giữ đạo tâm."
+            ].forEach(quote => quotes.add(quote));
+            const quotePool = Array.from(quotes);
+            let availableQuotes = quotePool.filter(quote => !usedTeacherQuotes.has(quote));
+            if (availableQuotes.length === 0) {
+                usedTeacherQuotes.clear();
+                availableQuotes = quotePool;
+            }
+            for (let i = availableQuotes.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableQuotes[i], availableQuotes[j]] = [availableQuotes[j], availableQuotes[i]];
+            }
+            floatingQuotes = [];
+            const qCount = isMobile ? 6 : 5;
+            const selectedQuotes = availableQuotes.slice(0, qCount);
+            selectedQuotes.forEach(quote => usedTeacherQuotes.add(quote));
+            const yMin = height * 0.26;
+            const yMax = height * 0.74;
+            for (let i = 0; i < selectedQuotes.length; i++) {
+                const t = selectedQuotes[i];
+                // Mobile: ~2.2–2.8s ngang màn; desktop vừa phải
+                const speed = isMobile
+                    ? (width / 140) * (1.0 + Math.random() * 0.35)
+                    : 1.1 + Math.random() * 0.4;
+                const dir = (i % 2 === 0) ? 1 : -1;
+                floatingQuotes.push({
+                    text: t,
+                    // Xen kẽ vị trí bắt đầu để liên tục có chữ trên màn
+                    x: dir > 0 ? -40 - i * (isMobile ? 80 : 40) : width + 40 + i * (isMobile ? 80 : 40),
+                    y: yMin + (i / Math.max(selectedQuotes.length - 1, 1)) * (yMax - yMin),
+                    vx: speed * dir,
+                    vy: 0,
+                    alpha: isMobile ? 0.96 : 0.82,
+                    size: isMobile ? 15 : 13 + Math.floor(Math.random() * 4),
+                    color: i % 2 === 0 ? '#fde68a' : '#a5f3fc'
+                });
+            }
+        }
+
+        function triggerBossTwist() {
+            if (gameState !== 'BOSS_FIGHT') return;
+            gameState = 'BOSS_TWIST';
+            twistProgress = 0;
+            hp = Math.max(hp, 25);
+            // Ẩn HUD tầng để không che chữ chạy lời thầy
+            if (gameHud) gameHud.classList.add('hidden');
+
+            sound.playBreakthrough();
+            flashColor = '#facc15';
+            flashAlpha = 0.65;
+
+            // Lời thầy cô tràn ngập màn hình
+            spawnTeacherQuoteStorm();
+
+            const twistQuotes = [
+                "Dừng tay! Lỗi không ở thuật toán — Thầy giúp em!",
+                "Nhìn lại những gì đã học — đáp án nằm ở đó.",
+                "Đạo tâm chưa tắt. Sư tôn vẫn ở bên.",
+                "Bug không đáng sợ. Đáng sợ là bỏ cuộc."
+            ];
+            const twistBanners = [
+                "✨ LỜI SƯ TÔN VANG VỌNG — TRUYỀN THỤ BÍ KÍP!",
+                "✨ HỒI ỨC BỐN NĂM BÙNG NỔ!",
+                "✨ KINH NGHIỆM THẦY CÔ CHE CHỞ ĐẠO TÂM!",
+                "✨ NHỜ LỜI THẦY — QUA ẢI LẦN NÀY!"
+            ];
+            bossEntity.quote = twistQuotes[Math.floor(Math.random() * twistQuotes.length)];
+            bannerAlert.textContent = twistBanners[Math.floor(Math.random() * twistBanners.length)];
+            bannerAlert.className = "mx-auto mt-1 px-4 py-1.5 rounded-full bg-amber-500/30 border border-amber-300 text-amber-200 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg";
+
+            // Biến toàn bộ quả cầu tấn công (bug) trên màn hình thành Hoa Sen / Linh Khí Vàng Kim!
+            fallingItems.forEach(item => {
+                item.isGood = true;
+                item.isLotus = true;
+                item.text = "✨ Bí Kíp Debug";
+                item.color = "#facc15";
+                item.vy = -1.2; // Bay lơ lửng nhẹ nhàng
+            });
+
+            // Tạo vụ nổ hạt ánh sáng vàng kim quanh Boss
+            for (let i = 0; i < 60; i++) {
+                const angle = (Math.PI * 2 * i) / 60;
+                const speed = Math.random() * 4 + 1.5;
+                particles.push({
+                    x: bossEntity.x,
+                    y: bossEntity.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 4 + 2,
+                    color: i % 2 === 0 ? '#facc15' : '#22d3ee',
+                    alpha: 1,
+                    decay: 0.012
+                });
+            }
+        }
+
+        // Bí kíp gắn bài học — random mỗi lần độ kiếp thành công
+        const BI_KIP_THEO_BAI = [
+            { lesson: "lỗi cơ bản", secret: "Đọc từng dòng" },
+            { lesson: "syntax", secret: "Không sợ compiler" },
+            { lesson: "cấu trúc", secret: "Hiểu trước khi tối ưu" },
+            { lesson: "độ phức tạp", secret: "O(1) tư duy" },
+            { lesson: "thuật toán", secret: "Không học thuộc suông" },
+            { lesson: "hệ thống", secret: "Đọc log từng bước" },
+            { lesson: "debug", secret: "Tìm nguyên nhân, đừng đoán" },
+            { lesson: "deadline", secret: "Chia nhỏ rồi chinh phục" },
+            { lesson: "Clean Code", secret: "Clean Code" },
+            { lesson: "vấn đáp", secret: "Biết mình đã học gì" },
+            { lesson: "đạo tâm", secret: "Không bỏ cuộc" },
+            { lesson: "sư tôn", secret: "Nhớ lời thầy đã dạy" }
+        ];
+
+        let chosenSecret = "Clean Code";
+
+        function pickRandomSecret() {
+            // Ưu tiên bí kíp gần với bài học đã dùng trong run
+            const matched = BI_KIP_THEO_BAI.filter(b =>
+                lessonsLearned.some(l => l.toLowerCase().includes(b.lesson.toLowerCase()) || b.lesson.toLowerCase().includes(l.toLowerCase().slice(0, 12)))
+            );
+            const pool = matched.length > 0 ? matched : BI_KIP_THEO_BAI;
+            return pool[Math.floor(Math.random() * pool.length)].secret;
+        }
+
+        function triggerVictory() {
+            gameState = 'VICTORY';
+            sound.playBreakthrough();
+            sound.startGratitudeBGM();
+
+            gameHud.classList.add('hidden');
+            bannerAlert.classList.add('hidden');
+
+            const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+            const secs = Math.floor(elapsedSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('finalTime').textContent = `${mins}:${secs}`;
+            document.getElementById('finalScore').textContent = score.toLocaleString();
+
+            chosenSecret = pickRandomSecret();
+            const secretEl = document.getElementById('finalSecret');
+            if (secretEl) secretEl.textContent = chosenSecret;
+
+            const lessonsEl = document.getElementById('lessonsSummary');
+            if (lessonsEl) {
+                if (lessonsLearned.length === 0) {
+                    lessonsEl.innerHTML = `<div class="text-slate-400">Lần này chưa chạm nhiều câu hỏi — nhưng sư tôn vẫn ở bên.</div>`;
+                } else {
+                    lessonsEl.innerHTML =
+                        `<div class="text-amber-300/90 font-bold mb-1">Bài học đã dùng trên đường tu:</div>` +
+                        lessonsLearned.map(l => `<div>• ${l}</div>`).join('') +
+                        `<div class="text-cyan-300/80 mt-1">Trả lời đúng: ${correctAnswers} lần</div>`;
+                }
+            }
+
+            victoryScreen.classList.remove('hidden');
+            if (canvas) canvas.style.pointerEvents = 'none';
+            refreshLeaderboard();
+            const submitStatus = document.getElementById('submitStatus');
+            if (submitStatus) submitStatus.textContent = '';
+            const submitBtn = document.getElementById('submitScoreBtn');
+            if (submitBtn) submitBtn.disabled = false;
+            // Cuộn nhẹ xuống vùng nhập tên trên mobile
+            setTimeout(() => {
+                const box = document.getElementById('submitScoreBox');
+                if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            sound.playHit();
+            gameHud.classList.add('hidden');
+            bannerAlert.classList.add('hidden');
+
+            const stage = STAGES[currentStageIdx];
+            let reason = `Đạo hữu đã cạn kiệt Đạo Tâm tại ${stage.name}.`;
+            // Hết máu → mới lộ đáp án + lời thầy (random)
+            const mem = (stage.memories && stage.memories.length)
+                ? stage.memories[Math.floor(Math.random() * stage.memories.length)]
+                : null;
+            if (lastQuiz) {
+                reason += `\n\nĐáp án đúng: ${lastQuiz.correct}`;
+                if (lastQuiz.q) reason += `\n(Câu hỏi: ${lastQuiz.q})`;
+            }
+            if (mem) reason += `\n\n${mem.speaker}: ${mem.quote}`;
+            document.getElementById('failReason').textContent = reason;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        /**
+         * ============================================================================
+         * TÂM PHÁP – KỸ NĂNG TU TIÊN
+         * ============================================================================
+         */
+        function grantRandomSkill() {
+            const skill = TAM_PHAP[Math.floor(Math.random() * TAM_PHAP.length)];
+            activateSkill(skill);
+        }
+
+        function activateSkill(skill) {
+            if (!skill) return;
+            activeSkill = skill;
+            skillTimer = skill.duration;
+            timeScale = 1;
+
+            if (skill.id === "ho_the") {
+                player.invulnTimer = Math.max(player.invulnTimer, skill.duration);
+            } else if (skill.id === "dinh_than") {
+                timeScale = 0.45; // làm chậm thiên kiếp
+            }
+
+            // UI
+            const skillBox = document.getElementById('skillBox');
+            const skillNameText = document.getElementById('skillNameText');
+            if (skillBox && skillNameText) {
+                skillNameText.textContent = `✦ ${skill.name}`;
+                skillBox.style.borderColor = skill.color;
+                skillBox.style.color = skill.color;
+                skillBox.classList.remove('hidden');
+            }
+
+            spawnFloatingText(player.x, player.y - 70, skill.name, skill.color, 16);
+            sound.playBreakthrough();
+            flashColor = skill.color;
+            flashAlpha = 0.28;
+
+            bannerAlert.textContent = `✨ TÂM PHÁP: ${skill.name.toUpperCase()} — ${skill.desc}`;
+            bannerAlert.className = "mx-auto mt-1 px-4 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-300/60 text-cyan-200 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg";
+            bannerAlert.classList.remove('hidden');
+            setTimeout(() => {
+                if (gameState === 'PLAYING' || gameState === 'BOSS_FIGHT') {
+                    bannerAlert.classList.add('hidden');
+                }
+            }, 2200);
+        }
+
+        function updateSkill(dt) {
+            if (!activeSkill) return;
+            skillTimer -= dt;
+            if (skillTimer <= 0) {
+                // Kết thúc kỹ năng
+                if (activeSkill.id === "dinh_than") {
+                    timeScale = 1;
+                }
+                activeSkill = null;
+                skillTimer = 0;
+                const skillBox = document.getElementById('skillBox');
+                if (skillBox) skillBox.classList.add('hidden');
+            } else if (activeSkill.id === "hap_tinh") {
+                // Hút linh khí về phía người chơi
+                fallingItems.forEach(item => {
+                    if (item.isGood) {
+                        item.x += (player.x - item.x) * 0.08;
+                        item.y += (player.y - item.y) * 0.08;
+                    }
+                });
+            }
+        }
+
+        /**
+         * ============================================================================
+         * HỆ THỐNG HỒI ỨC THẦY CÔ (Khi Đạo Tâm gần cạn)
+         * ============================================================================
+         */
+        function triggerMemory() {
+            if (memoryActive || memoryTriggered[currentStageIdx]) return;
+            // Từ tầng 1 trở đi đều có thể kích hoạt
+
+            const stage = STAGES[currentStageIdx];
+            if (!stage.memories || stage.memories.length === 0) return;
+
+            memoryTriggered[currentStageIdx] = true;
+            memoryActive = true;
+            memoryTimer = 4.0; // dài hơn, mang cảm giác buff phim
+            memoryAlpha = 0;
+
+            const mem = stage.memories[Math.floor(Math.random() * stage.memories.length)];
+            memoryQuote = mem.quote;
+            memorySpeaker = mem.speaker;
+
+            // ===== BUFF MẠNH NHƯ PHIM =====
+            const healAmt = 32 + currentStageIdx * 4;
+            hp = Math.min(100, hp + healAmt);
+            player.invulnTimer = 2.4;
+            combo = Math.max(combo, 5);
+
+            // Nhờ lời thầy: bug bị vô hiệu / biến thành linh khí (cách xử lý đúng)
+            fallingItems.forEach(item => {
+                if (!item.isGood && Math.random() < 0.85) {
+                    item.isGood = true;
+                    item.isLotus = true;
+                    item.isQuiz = false;
+                    item.text = "✨ Nhờ lời thầy";
+                    item.color = "#fde68a";
+                    item.vy = Math.min(item.vy, 1.0);
+                }
+            });
+            if (stage.lesson && !lessonsLearned.includes(stage.lesson)) {
+                lessonsLearned.push(stage.lesson);
+            }
+
+            // Vụ nổ particle mạnh (buff awakening)
+            for (let i = 0; i < 70; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 1.5;
+                particles.push({
+                    x: player.x,
+                    y: player.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 2,
+                    size: Math.random() * 5 + 2,
+                    color: i % 3 === 0 ? '#fde68a' : (i % 3 === 1 ? '#67e8f9' : '#a78bfa'),
+                    alpha: 1,
+                    decay: 0.01
+                });
+            }
+
+            // Chữ buff nổi liên tiếp (cảm giác kiến thức trào ra)
+            const buffLines = [
+                "ĐẠO TÂM BÙNG CHÁY!",
+                "KINH NGHIỆM THẦY CÔ!",
+                `+${healAmt} Đạo Tâm`
+            ];
+            buffLines.forEach((t, idx) => {
+                setTimeout(() => {
+                    spawnFloatingText(player.x + (Math.random() - 0.5) * 40, player.y - 50 - idx * 22, t, idx === 2 ? "#34d399" : "#fde68a", 15 + idx);
+                }, idx * 180);
+            });
+
+            sound.playBreakthrough();
+            flashColor = '#fde68a';
+            flashAlpha = 0.5;
+            shakeTime = 0.4;
+
+            bannerAlert.textContent = "✨ HỒI ỨC & KINH NGHIỆM BÙNG NỔ — SƯ TÔN Ở BÊN BẠN!";
+            bannerAlert.className = "mx-auto mt-1 px-4 py-1.5 rounded-full bg-amber-500/30 border border-amber-300 text-amber-100 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg";
+            bannerAlert.classList.remove('hidden');
+            setTimeout(() => {
+                if (gameState === 'PLAYING' || gameState === 'BOSS_FIGHT') {
+                    bannerAlert.classList.add('hidden');
+                }
+            }, 3200);
+
+            // Truyền Tâm Pháp sau một nhịp
+            setTimeout(() => {
+                try {
+                    if (gameState === 'PLAYING' || gameState === 'BOSS_FIGHT') {
+                        grantRandomSkill();
+                    }
+                } catch (e) {}
+            }, 1000);
+
+            updateHUD();
+        }
+
+        /**
+         * ============================================================================
+         * TẠO VẬT PHẨM, HIỆU ỨNG HẠT & CHỮ NỔI
+         * ============================================================================
+         */
+        function spawnStageItem() {
+            const stage = STAGES[currentStageIdx];
+            if (!stage || stage.id === 4) return;
+
+            const dens = densityMult();
+            const goodChance = stage.goodRatio ?? 0.55;
+            // Desktop thỉnh thoảng spawn thêm một vật phẩm, tránh dồn quá dày.
+            const burst = (!isMobile && Math.random() < 0.3 * dens) ? 2 : 1;
+
+            for (let b = 0; b < burst; b++) {
+                const isGood = Math.random() < goodChance;
+                const list = isGood ? stage.goodItems : stage.badItems;
+                const text = list[Math.floor(Math.random() * list.length)];
+                const margin = isMobile ? 65 : 40;
+                const x = Math.random() * (width - margin * 2) + margin;
+                const baseSpeed = (Math.random() * 1.2 + 1.55) * stage.speedMult * (isMobile ? 1 : 1.05 + dens * 0.08);
+
+                fallingItems.push({
+                    x: x,
+                    y: -30 - b * 18,
+                    vx: (Math.random() - 0.5) * (isMobile ? 0.7 : 1.1),
+                    vy: baseSpeed,
+                    text: text,
+                    isGood: isGood,
+                    isLotus: false,
+                    isQuiz: false,
+                    color: isGood ? stage.color : '#f43f5e',
+                    radius: 22,
+                    pulse: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        /**
+         * Câu hỏi kiến thức: KHÔNG hiện đúng/sai — người chơi tự tìm
+         * Chỉ khi hết máu mới lộ đáp án + lời thầy
+         */
+        function spawnQuiz() {
+            const stage = STAGES[currentStageIdx];
+            if (!stage || !stage.quizzes || stage.quizzes.length === 0) return;
+
+            const quiz = stage.quizzes[Math.floor(Math.random() * stage.quizzes.length)];
+            lastQuiz = quiz;
+
+            const answers = [
+                { text: quiz.correct, isGood: true },
+                { text: quiz.wrong[0], isGood: false },
+                { text: quiz.wrong[1], isGood: false }
+            ];
+            for (let i = answers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [answers[i], answers[j]] = [answers[j], answers[i]];
+            }
+
+            bannerAlert.textContent = "📜 " + quiz.q + " — Tự tìm đáp án đúng!";
+            bannerAlert.className = "mx-auto mt-1 px-4 py-1.5 rounded-full bg-violet-500/25 border border-violet-300/60 text-violet-100 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg";
+            bannerAlert.classList.remove('hidden');
+            setTimeout(() => {
+                if (gameState === 'PLAYING') bannerAlert.classList.add('hidden');
+            }, 3500);
+
+            const spacing = Math.min(width * 0.28, 160);
+            const startX = width / 2 - spacing;
+            // Màu trung tính — không lộ đúng/sai
+            answers.forEach((ans, idx) => {
+                fallingItems.push({
+                    x: startX + idx * spacing,
+                    y: -40,
+                    vx: 0,
+                    vy: 1.55 + currentStageIdx * 0.12,
+                    text: ans.text,
+                    isGood: ans.isGood,
+                    isLotus: false,
+                    isQuiz: true,
+                    quizCorrect: ans.isGood,
+                    color: "#a78bfa",
+                    radius: 26,
+                    pulse: 0
+                });
+            });
+        }
+
+        function spawnBossAttack() {
+            const stage = STAGES[3];
+            const angleToPlayer = Math.atan2(player.y - bossEntity.y, player.x - bossEntity.x);
+            const progress = 1 - (bossTimer / BOSS_DURATION);
+
+            // Câu hỏi vẫn xuất hiện đều nhưng không dồn dập trên desktop.
+            const quizChance = isMobile ? 0.35 : 0.2;
+            if (stage.bossAnswers && Math.random() < quizChance) {
+                const qa = stage.bossAnswers[Math.floor(Math.random() * stage.bossAnswers.length)];
+                lastQuiz = { q: "Câu hỏi Hội đồng", correct: qa.correct, wrong: qa.wrong };
+                const opts = [
+                    { text: qa.correct, isGood: true },
+                    { text: qa.wrong[0], isGood: false },
+                    { text: qa.wrong[1], isGood: false }
+                ];
+                for (let i = opts.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [opts[i], opts[j]] = [opts[j], opts[i]];
+                }
+                bannerAlert.textContent = "📜 HỘI ĐỒNG HỎI — Tự tìm đáp án đúng!";
+                bannerAlert.classList.remove('hidden');
+                setTimeout(() => bannerAlert.classList.add('hidden'), 2800);
+
+                opts.forEach((opt, idx) => {
+                    const spread = (idx - 1) * 0.4;
+                    const ang = angleToPlayer + spread;
+                    const speed = 2.8 + progress * 1.2;
+                    fallingItems.push({
+                        x: bossEntity.x,
+                        y: bossEntity.y + 30,
+                        vx: Math.cos(ang) * speed,
+                        vy: Math.sin(ang) * speed,
+                        text: opt.text,
+                        isGood: opt.isGood,
+                        isLotus: false,
+                        isQuiz: true,
+                        quizCorrect: opt.isGood,
+                        color: "#fbbf24", // trung tính vàng — không lộ đúng/sai
+                        radius: 26,
+                        pulse: 0
+                    });
+                });
+                return;
+            }
+
+            // Giữ lượng đòn vừa phải để màn hình desktop không bị phủ kín.
+            let shotCount = progress > 0.6 ? 3 : (progress > 0.3 ? 2 : 1);
+            if (!isMobile) shotCount = Math.min(4, shotCount + 1);
+            const baseSpeed = (isMobile ? 3.2 : 3.6) + progress * (isMobile ? 1.8 : 2.2);
+
+            // Desktop dùng ít cột hơn và thỉnh thoảng mới tạo một hàng đạn.
+            if (!isMobile && Math.random() < 0.28 + progress * 0.15) {
+                const cols = Math.min(5, 3 + Math.floor(progress * 2));
+                for (let c = 0; c < cols; c++) {
+                    const text = stage.bossAttacks[Math.floor(Math.random() * stage.bossAttacks.length)];
+                    // Lệch nhẹ mỗi hàng để không tạo “làn đường an toàn” cố định
+                    const x = (width / (cols + 1)) * (c + 1) + (Math.random() - 0.5) * 28;
+                    fallingItems.push({
+                        x: x,
+                        y: bossEntity.y + 15 + Math.random() * 25,
+                        vx: (Math.random() - 0.5) * 0.9,
+                        vy: 2.8 + progress * 1.8 + Math.random() * 1.0,
+                        text: text,
+                        isGood: false,
+                        isLotus: false,
+                        isQuiz: false,
+                        color: progress > 0.5 ? '#f43f5e' : '#fb7185',
+                        radius: 24 + Math.min(progress * 6, 8),
+                        pulse: 0
+                    });
+                }
+                // Thêm một viên nhắm player để người chơi vẫn cần di chuyển.
+                const targetCount = isMobile ? 2 : 1;
+                for (let e = 0; e < targetCount; e++) {
+                    const text = stage.bossAttacks[Math.floor(Math.random() * stage.bossAttacks.length)];
+                    const spread = (e - 0.5) * 0.25;
+                    const ang = angleToPlayer + spread;
+                    const speed = baseSpeed + Math.random();
+                    fallingItems.push({
+                        x: bossEntity.x,
+                        y: bossEntity.y + 30,
+                        vx: Math.cos(ang) * speed,
+                        vy: Math.sin(ang) * speed,
+                        text: text,
+                        isGood: false,
+                        isLotus: false,
+                        isQuiz: false,
+                        color: '#f43f5e',
+                        radius: 24,
+                        pulse: 0
+                    });
+                }
+                return;
+            }
+
+            for (let s = 0; s < shotCount; s++) {
+                const text = stage.bossAttacks[Math.floor(Math.random() * stage.bossAttacks.length)];
+                // Desktop: quạt rộng hơn để phủ hai bên
+                const step = isMobile ? 0.35 : 0.22;
+                const spread = (s - (shotCount - 1) / 2) * step + (Math.random() - 0.5) * 0.15;
+                const finalAngle = angleToPlayer + spread;
+                const speed = baseSpeed + Math.random() * 1.2;
+
+                fallingItems.push({
+                    x: bossEntity.x + (Math.random() - 0.5) * (isMobile ? 30 : 100),
+                    y: bossEntity.y + 30,
+                    vx: Math.cos(finalAngle) * speed,
+                    vy: Math.sin(finalAngle) * speed,
+                    text: text,
+                    isGood: false,
+                    isLotus: false,
+                    isQuiz: false,
+                    color: progress > 0.5 ? '#f43f5e' : '#fb7185',
+                    radius: 22 + Math.min(progress * 6, 8),
+                    pulse: 0
+                });
+            }
+        }
+
+        function spawnParticles(x, y, color, count = 14, upwardBias = 0) {
+            // Giới hạn particle trên mobile
+            let n = isMobile ? Math.min(count, 6) : count;
+            if (particles.length > (isMobile ? 40 : 120)) n = Math.min(n, 3);
+            for (let i = 0; i < n; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3.2 + 1.0;
+                particles.push({
+                    x,
+                    y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - upwardBias,
+                    size: Math.random() * 3.2 + 1.2,
+                    color,
+                    alpha: 1,
+                    decay: Math.random() * 0.035 + 0.02
+                });
+            }
+        }
+
+        function spawnFloatingText(x, y, text, color, size = 15) {
+            floatingTexts.push({
+                x,
+                y,
+                text,
+                color,
+                size,
+                alpha: 1,
+                vy: -1.55
+            });
+        }
+
+        /**
+         * ============================================================================
+         * VÒNG LẶP CẬP NHẬT LOGIC (UPDATE)
+         * ============================================================================
+         */
+        let lastFrameTime = performance.now();
+
+        function update(dt) {
+            bgStars.forEach(s => {
+                s.y += s.speed;
+                if (s.y > height) {
+                    s.y = 0;
+                    s.x = Math.random() * width;
+                }
+            });
+            bgMatrixCols.forEach(c => {
+                c.y += c.speed;
+                if (c.y > height) {
+                    c.y = -20;
+                }
+            });
+
+            if (shakeTime > 0) shakeTime -= dt;
+            if (flashAlpha > 0) flashAlpha = Math.max(0, flashAlpha - dt * 1.2);
+
+            // Cập nhật hiệu ứng Hồi ức
+            if (memoryActive) {
+                memoryTimer -= dt;
+                if (memoryTimer > 2.4) {
+                    memoryAlpha = Math.min(1, memoryAlpha + dt * 2.5);
+                } else if (memoryTimer < 0.6) {
+                    memoryAlpha = Math.max(0, memoryAlpha - dt * 2.2);
+                } else {
+                    memoryAlpha = 1;
+                }
+                if (memoryTimer <= 0) {
+                    memoryActive = false;
+                    memoryAlpha = 0;
+                }
+            }
+
+            if (gameState === 'VICTORY') {
+                // Mobile: tắt mưa particle để cuộn BXH mượt
+                if (!isMobile && Math.random() < 0.04) {
+                    const fx = Math.random() * width;
+                    const fy = Math.random() * (height * 0.5);
+                    const colors = ['#facc15', '#22d3ee', '#34d399'];
+                    spawnParticles(fx, fy, colors[Math.floor(Math.random() * colors.length)], 8, 1.0);
+                }
+                updateParticlesAndTexts(dt);
+                return;
+            }
+
+            // Nếu đang trong màn hình cốt truyện, tạm dừng gameplay
+            if (gameState === 'STORY' || (gameState !== 'PLAYING' && gameState !== 'BOSS_FIGHT' && gameState !== 'BOSS_TWIST')) {
+                updateParticlesAndTexts(dt);
+                return;
+            }
+
+            elapsedSeconds = (Date.now() - startTime) / 1000;
+            const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+            const secs = Math.floor(elapsedSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+
+            // Di chuyển nhân vật mượt mà theo con trỏ / ngón tay
+            player.x += (player.targetX - player.x) * 0.22;
+            player.y += (player.targetY - player.y) * 0.22;
+            player.auraAngle += dt * 2.5;
+            if (player.invulnTimer > 0) player.invulnTimer -= dt;
+
+            // Cập nhật Tâm Pháp
+            updateSkill(dt);
+
+            // Kiểm tra kích hoạt Hồi ức khi Đạo Tâm thấp (tầng 2 trở đi)
+            if (!memoryActive && !memoryTriggered[currentStageIdx] && hp <= 32 && hp > 0 &&
+                (gameState === 'PLAYING' || gameState === 'BOSS_FIGHT')) {
+                triggerMemory();
+            }
+
+            // Cập nhật từng trạng thái
+            if (gameState === 'PLAYING') {
+                const stage = STAGES[currentStageIdx];
+                const rate = stage.spawnRate * densityMult();
+                if (Math.random() < rate) {
+                    spawnStageItem();
+                }
+                // Thỉnh thoảng xuất câu hỏi kiến thức (bắt buộc "hiểu" chứ không chỉ né)
+                quizCooldown -= dt;
+                if (quizCooldown <= 0) {
+                    spawnQuiz();
+                    quizCooldown = 12 + Math.random() * 6; // 12–18 giây / lần — nhịp chậm hơn
+                }
+            } else if (gameState === 'BOSS_FIGHT' && typeof bossEntity !== 'undefined' && bossEntity) {
+                // Boss di chuyển lơ lửng uy nghiêm phía trên
+                bossEntity.y += (bossEntity.targetY - bossEntity.y) * 0.08;
+                bossEntity.x = width / 2 + Math.sin(elapsedSeconds * 1.6) * Math.min(130, width * 0.25);
+
+                bossEntity.attackCooldown -= dt;
+                if (bossEntity.attackCooldown <= 0) {
+                    spawnBossAttack();
+                    // Càng lâu càng dồn — sinh viên năm cuối bị dồn vào chân tường
+                    const progress = 1 - (bossTimer / BOSS_DURATION);
+                    const cdBase = isMobile ? 0.55 : 0.72;
+                    const cdMin = isMobile ? 0.28 : 0.56;
+                    bossEntity.attackCooldown = Math.max(cdMin, cdBase - progress * (isMobile ? 0.22 : 0.16));
+                }
+
+                // Lời thoại boss random theo mức áp lực (không cố định một câu)
+                const p = 1 - (bossTimer / BOSS_DURATION);
+                if (!bossEntity._quotePhase) bossEntity._quotePhase = -1;
+                let phase = 0;
+                if (p > 0.75) phase = 3;
+                else if (p > 0.45) phase = 2;
+                else if (p > 0.2) phase = 1;
+                if (phase !== bossEntity._quotePhase) {
+                    bossEntity._quotePhase = phase;
+                    const pools = [
+                        ["Hãy cho ta thấy bốn năm của ngươi.", "Bắt đầu vấn đáp."],
+                        ["Hội đồng chưa xong…", "Sâu hơn nữa đi.", "Em giải thích được không?"],
+                        ["Logic đâu? Tối ưu đâu?", "Clean Code chưa?", "Bảo mật xử lý sao?"],
+                        ["Áp lực thật sự bắt đầu!", "Không còn đường lui.", "Đứng vững lên!"]
+                    ];
+                    const pool = pools[phase] || pools[0];
+                    bossEntity.quote = pool[Math.floor(Math.random() * pool.length)];
+                }
+
+                bossTimer -= dt;
+                updateHUD();
+
+                // CÚ TWIST: Hết giờ hoặc HP rất thấp → Lão Tổ ra tay (vẫn cứu, nhưng sau khi đã đẩy đến giới hạn)
+                if (bossTimer <= 0 || hp <= 18) {
+                    triggerBossTwist();
+                }
+            } else if (gameState === 'BOSS_TWIST') {
+                // Mobile dài hơn (~12–13s) để kịp đọc; desktop ~9s
+                twistProgress += dt * (isMobile ? 0.078 : 0.11);
+                fallingItems.forEach(item => {
+                    item.x += (player.x - item.x) * 0.05;
+                    item.y += (player.y - item.y) * 0.05;
+                });
+
+                // Chữ chạy ngang (vx đã scale theo độ rộng màn)
+                floatingQuotes.forEach(fq => {
+                    fq.x += fq.vx;
+                    const wrap = Math.max(width + 80, 360);
+                    if (fq.x < -wrap) fq.x = width + 40;
+                    if (fq.x > width + wrap) fq.x = -40;
+                });
+
+                // Con đường phía trước — random câu mỗi run
+                if (twistProgress > 0.58 && twistProgress < 0.64 && !window.__pathAheadShown) {
+                    window.__pathAheadShown = true;
+                    const pathBanners = [
+                        "🌄 ĐỘ KIẾP ĐÃ QUA — PHÍA TRƯỚC VẪN CÒN NHỮNG NGỌN NÚI CAO HƠN",
+                        "🌄 Núi này đã vượt. Việc làm, sản phẩm thật… vẫn đang chờ.",
+                        "🌄 Sư tôn đã chỉ đường — phần còn lại là bước chân của ngươi.",
+                        "🌄 Ra ngoài tông môn, thiên kiếp mới chỉ bắt đầu."
+                    ];
+                    const pathQuotes = [
+                        "Ra ngoài kia… vẫn còn nhiều ải.",
+                        "Đừng nghĩ đã xong. Thế giới thật còn rộng hơn.",
+                        "Giữ đạo tâm. Núi sau sẽ cao hơn.",
+                        "Bốn năm chỉ là nền. Phía trước mới là chính đạo."
+                    ];
+                    bannerAlert.textContent = pathBanners[Math.floor(Math.random() * pathBanners.length)];
+                    bannerAlert.className = "mx-auto mt-1 px-4 py-1.5 rounded-full bg-amber-500/30 border border-amber-200 text-amber-100 font-code text-xs sm:text-sm font-bold text-center backdrop-blur-md shadow-lg";
+                    bannerAlert.classList.remove('hidden');
+                    bossEntity.quote = pathQuotes[Math.floor(Math.random() * pathQuotes.length)];
+                }
+
+                if (twistProgress >= 1) {
+                    fallingItems = [];
+                    floatingQuotes = [];
+                    window.__pathAheadShown = false;
+                    triggerVictory();
+                    return;
+                }
+            }
+
+            // Cập nhật vật phẩm rơi & va chạm
+            for (let i = fallingItems.length - 1; i >= 0; i--) {
+                const item = fallingItems[i];
+                if (!item || item.x === undefined) {
+                    fallingItems.splice(i, 1);
+                    continue;
+                }
+                // Định Thần Phù làm chậm thiên kiếp
+                const ts = timeScale || 1;
+                item.x += (item.vx || 0) * ts;
+                item.y += (item.vy || 0) * ts;
+                item.pulse = (item.pulse || 0) + dt * 5;
+
+                // Kiểm tra va chạm với Đạo Hữu Coder
+                const dx = item.x - player.x;
+                const dy = item.y - player.y;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist < player.radius + item.radius) {
+                    if (item.isGood) {
+                        combo++;
+                        if (combo > maxCombo) maxCombo = combo;
+                        sound.playCollect(combo);
+
+                        const comboBonus = Math.min(Math.floor(combo / 3), 8);
+                        let xpGain = 12 + comboBonus;
+                        let scoreGain = 40 + combo * 10;
+
+                        // Trả lời đúng câu hỏi kiến thức
+                        if (item.isQuiz || item.quizCorrect) {
+                            xpGain += 20;
+                            scoreGain += 80;
+                            correctAnswers++;
+                            hp = Math.min(100, hp + 8);
+                            const stage = STAGES[currentStageIdx];
+                            if (stage && stage.lesson && !lessonsLearned.includes(stage.lesson)) {
+                                lessonsLearned.push(stage.lesson);
+                            }
+                            spawnFloatingText(item.x, item.y - 28, "ĐÚNG RỒI!", "#34d399", 16);
+                            // Xóa các đáp án quiz còn lại
+                            for (let j = fallingItems.length - 1; j >= 0; j--) {
+                                if (fallingItems[j] && fallingItems[j].isQuiz) fallingItems.splice(j, 1);
+                            }
+                            // Boss: trả lời đúng → giảm áp lực
+                            if (gameState === 'BOSS_FIGHT') {
+                                bossTimer = Math.max(0, bossTimer - 1.2);
+                                bossEntity.quote = "Được… tiếp tục!";
+                                spawnFloatingText(player.x, player.y - 70, "HỘI ĐỒNG GẬT ĐẦU", "#fde68a", 14);
+                            }
+                            if (Math.random() < 0.45) grantRandomSkill();
+                        }
+
+                        xp += xpGain;
+                        score += scoreGain;
+
+                        spawnParticles(item.x, item.y, item.color, 12 + Math.min(combo, 10));
+                        spawnFloatingText(item.x, item.y - 15, `+${xpGain} Tu Vi`, item.color, 14);
+                        if (combo >= 5 && combo % 5 === 0) {
+                            spawnFloatingText(player.x, player.y - 55, `COMBO x${combo}!`, "#fde68a", 15);
+                        }
+
+                        const comboText = document.getElementById('comboText');
+                        if (comboText) comboText.textContent = combo;
+
+                        fallingItems.splice(i, 1);
+
+                        if (gameState === 'PLAYING' && xp >= STAGES[currentStageIdx].targetXP) {
+                            advanceStage();
+                        } else {
+                            updateHUD();
+                        }
+                        continue;
+                    } else if (gameState === 'PLAYING' || gameState === 'BOSS_FIGHT') {
+                        // Trúng Thiên Kiếp Bug
+                        if (player.invulnTimer <= 0) {
+                            const oldCombo = combo;
+                            combo = 0;
+                            const comboText = document.getElementById('comboText');
+                            if (comboText) comboText.textContent = "0";
+
+                            sound.playHit();
+                            // Sát thương tăng dần theo năm
+                            let dmg = 14;
+                            if (currentStageIdx === 1) dmg = 16;
+                            else if (currentStageIdx === 2) dmg = 19;
+                            else if (gameState === 'BOSS_FIGHT') dmg = 15;
+
+                            // Hộ Thể giảm sát thương
+                            if (activeSkill && activeSkill.id === "ho_the") {
+                                dmg = Math.floor(dmg * 0.4);
+                            }
+
+                            hp -= dmg;
+                            player.invulnTimer = 0.55;
+                            shakeTime = 0.25;
+                            flashColor = '#f43f5e';
+                            flashAlpha = 0.3;
+
+                            spawnParticles(item.x, item.y, '#f43f5e', 16);
+                            spawnFloatingText(player.x, player.y - 30, `-${dmg} Đạo Tâm!`, '#fb7185', 16);
+
+                            // Hậu quả phá combo: nếu combo cũ cao → sinh thêm tâm ma
+                            if (oldCombo >= 6) {
+                                spawnFloatingText(player.x, player.y - 50, "COMBO VỠ — TÂM MA BÙNG PHÁT!", "#fb7185", 13);
+                                for (let k = 0; k < 2; k++) {
+                                    const angle = Math.random() * Math.PI * 2;
+                                    fallingItems.push({
+                                        x: player.x + Math.cos(angle) * 80,
+                                        y: player.y - 40 - Math.random() * 30,
+                                        vx: Math.cos(angle) * 1.2,
+                                        vy: 2.2 + Math.random(),
+                                        text: "Tâm Ma!",
+                                        isGood: false,
+                                        isLotus: false,
+                                        color: '#f43f5e',
+                                        radius: 20,
+                                        pulse: 0
+                                    });
+                                }
+                            }
+
+                            updateHUD();
+
+                            if (hp <= 0 && gameState === 'PLAYING') {
+                                triggerGameOver();
+                                return;
+                            }
+                        }
+                        fallingItems.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                // Xóa vật phẩm bay ra khỏi màn hình
+                if (item.y > height + 50 || item.x < -80 || item.x > width + 80) {
+                    fallingItems.splice(i, 1);
+                }
+            }
+
+            updateParticlesAndTexts(dt);
+        }
+
+        function updateParticlesAndTexts(dt) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.decay;
+                if (p.alpha <= 0) particles.splice(i, 1);
+            }
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy;
+                ft.alpha -= dt * 1.1;
+                if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        /**
+         * ============================================================================
+         * HỆ THỐNG ĐỒ HỌA RENDER TRÊN CANVAS (CYBERPUNK + TU TIÊN)
+         * ============================================================================
+         */
+        function draw() {
+            ctx.save();
+
+            // Hiệu ứng rung màn hình khi đột phá hoặc trúng sét
+            if (shakeTime > 0) {
+                const mag = shakeTime * 18;
+                ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+            }
+
+            // 1. Nền không gian huyền bí
+            const bgGrad = ctx.createRadialGradient(width / 2, height * 0.3, 40, width / 2, height / 2, Math.max(width, height));
+            bgGrad.addColorStop(0, '#11162d');
+            bgGrad.addColorStop(1, '#090a14');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Vẽ các cột chữ cổ phong + nhị phân rơi mờ phía sau
+            ctx.font = '13px "JetBrains Mono", monospace';
+            bgMatrixCols.forEach(c => {
+                ctx.fillStyle = `rgba(34, 211, 238, ${c.alpha})`;
+                ctx.fillText(c.char, c.x, c.y);
+            });
+
+            // Vẽ các hạt linh khí nền
+            bgStars.forEach(s => {
+                ctx.fillStyle = `rgba(226, 232, 240, ${s.alpha})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Vẽ Bát Quái Trận Pháp khổng lồ xoay mờ ở trung tâm
+            if (!isMobile) drawGiantFormation();
+
+            // 2. Vẽ Lão Tổ Hội Đồng (Nếu đang ở Giai đoạn 4)
+            if ((gameState === 'BOSS_FIGHT' || gameState === 'BOSS_TWIST') && bossEntity) {
+                drawBossMentor();
+            }
+
+            // 3. Vẽ Tia Sáng Truyền Thụ Bí Kíp (Nếu đang ở Cú Twist)
+            if (gameState === 'BOSS_TWIST' && bossEntity && player) {
+                drawGoldenBeam();
+            }
+
+            // Chữ chạy lời thầy cô — nền tối để dễ đọc trên mobile
+            if (gameState === 'BOSS_TWIST' && floatingQuotes.length) {
+                floatingQuotes.forEach(fq => {
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, fq.alpha);
+                    ctx.font = `bold ${fq.size}px "Be Vietnam Pro", system-ui, sans-serif`;
+                    ctx.textAlign = 'left';
+                    const tw = ctx.measureText(fq.text).width;
+                    const padX = 10;
+                    const padY = 6;
+                    // Nền tối bán trong suốt
+                    ctx.fillStyle = 'rgba(9, 10, 20, 0.72)';
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(fq.x - padX, fq.y - fq.size, tw + padX * 2, fq.size + padY * 2, 8);
+                    } else {
+                        ctx.rect(fq.x - padX, fq.y - fq.size, tw + padX * 2, fq.size + padY * 2);
+                    }
+                    ctx.fill();
+                    ctx.fillStyle = fq.color;
+                    ctx.fillText(fq.text, fq.x, fq.y);
+                    ctx.restore();
+                });
+                ctx.globalAlpha = 1;
+            }
+
+            // 4. Vẽ Vật Phẩm Rơi (Linh Khí & Thiên Kiếp Bug)
+            fallingItems.forEach(item => {
+                if (item && item.x !== undefined) drawItem(item);
+            });
+
+            // 5. Vẽ Nhân Vật Chính (Đạo Hữu Coder)
+            if (gameState !== 'START' && player) {
+                drawPlayer();
+            }
+
+            // 6. Vẽ Hiệu Ứng Hạt & Chữ Nổi
+            particles.forEach(p => {
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            floatingTexts.forEach(ft => {
+                ctx.globalAlpha = Math.max(0, ft.alpha);
+                ctx.font = `bold ${ft.size}px "JetBrains Mono", monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = ft.color;
+                ctx.shadowColor = ft.color;
+                ctx.shadowBlur = 8;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.shadowBlur = 0;
+            });
+            ctx.globalAlpha = 1;
+
+            // Hiệu ứng lóe sáng toàn màn hình khi đột phá
+            if (flashAlpha > 0) {
+                ctx.fillStyle = flashColor;
+                ctx.globalAlpha = flashAlpha;
+                ctx.fillRect(0, 0, width, height);
+                ctx.globalAlpha = 1;
+            }
+
+            // ==================== HỒI ỨC THẦY CÔ OVERLAY ====================
+            if (memoryActive && memoryAlpha > 0) {
+                // Lớp phủ tông màu ấm (sepia + vàng nhạt)
+                ctx.fillStyle = `rgba(40, 25, 8, ${0.55 * memoryAlpha})`;
+                ctx.fillRect(0, 0, width, height);
+
+                // Viền sáng mềm ở giữa
+                const glowGrad = ctx.createRadialGradient(width / 2, height * 0.38, 20, width / 2, height * 0.38, Math.min(width, height) * 0.45);
+                glowGrad.addColorStop(0, `rgba(253, 230, 138, ${0.18 * memoryAlpha})`);
+                glowGrad.addColorStop(1, 'rgba(253, 230, 138, 0)');
+                ctx.fillStyle = glowGrad;
+                ctx.fillRect(0, 0, width, height);
+
+                // Khung thoại hồi ức
+                const boxW = Math.min(width * 0.88, 520);
+                const boxH = 110;
+                const boxX = (width - boxW) / 2;
+                const boxY = height * 0.32;
+
+                ctx.globalAlpha = memoryAlpha;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                ctx.strokeStyle = '#fde68a';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(boxX, boxY, boxW, boxH, 16);
+                ctx.fill();
+                ctx.stroke();
+
+                // Tiêu đề nhỏ
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#fbbf24';
+                ctx.textAlign = 'center';
+                ctx.fillText('✦ HỒI ỨC THẦY CÔ ✦', width / 2, boxY + 22);
+
+                // Tên người nói
+                ctx.font = 'bold 13px "Be Vietnam Pro", system-ui, sans-serif';
+                ctx.fillStyle = '#fde68a';
+                ctx.fillText(memorySpeaker, width / 2, boxY + 44);
+
+                // Nội dung câu nói
+                ctx.font = '13px "Be Vietnam Pro", system-ui, sans-serif';
+                ctx.fillStyle = '#f1f5f9';
+                // Wrap text đơn giản
+                const maxTextW = boxW - 36;
+                const words = memoryQuote.split(' ');
+                let line = '';
+                let ty = boxY + 68;
+                for (let i = 0; i < words.length; i++) {
+                    const test = line + words[i] + ' ';
+                    if (ctx.measureText(test).width > maxTextW && line !== '') {
+                        ctx.fillText(line.trim(), width / 2, ty);
+                        line = words[i] + ' ';
+                        ty += 18;
+                    } else {
+                        line = test;
+                    }
+                }
+                if (line.trim()) ctx.fillText(line.trim(), width / 2, ty);
+
+                ctx.globalAlpha = 1;
+            }
+
+            ctx.restore();
+        }
+
+        function drawGiantFormation() {
+            const cx = width / 2;
+            const cy = height * 0.48;
+            const maxR = Math.min(width, height) * 0.36;
+            const stageColor = STAGES[currentStageIdx]?.color || '#22d3ee';
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(elapsedSeconds * 0.15);
+            ctx.strokeStyle = stageColor;
+            ctx.globalAlpha = 0.08;
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, maxR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, maxR * 0.78, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Hình bát giác trận pháp
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const a = (Math.PI * 2 * i) / 8;
+                const px = Math.cos(a) * maxR;
+                const py = Math.sin(a) * maxR;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Nhấp nháy nhẹ nếu đang trong trạng thái bất tử ngắn sau khi dính bug
+            if (player.invulnTimer > 0 && Math.floor(player.invulnTimer * 16) % 2 === 0) {
+                ctx.globalAlpha = 0.45;
+            }
+
+            const stageColor = STAGES[currentStageIdx]?.color || '#22d3ee';
+
+            // Vòng trận pháp dưới bồ đoàn công nghệ
+            ctx.save();
+            ctx.rotate(player.auraAngle);
+            ctx.strokeStyle = stageColor;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = stageColor;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.ellipse(0, 16, 36, 12, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Đĩa bay Bồ Đoàn Cyber
+            const padGrad = ctx.createLinearGradient(-30, 10, 30, 22);
+            padGrad.addColorStop(0, '#0f172a');
+            padGrad.addColorStop(0.5, stageColor);
+            padGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = padGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 15, 28, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thân tu sĩ IT (Áo đạo bào Neon tối giản)
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = stageColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-16, 13);
+            ctx.lineTo(-10, -8);
+            ctx.lineTo(10, -8);
+            ctx.lineTo(16, 13);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Đầu & Tóc búi củ tỏi tu tiên
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(0, -16, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Búi tóc tiên hiệp
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(0, -27, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-8, -26);
+            ctx.lineTo(8, -26);
+            ctx.stroke();
+
+            // Kính cận phát sáng của dân Coder
+            ctx.fillStyle = '#22d3ee';
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 6;
+            ctx.fillRect(-7, -18, 5, 3);
+            ctx.fillRect(2, -18, 5, 3);
+            ctx.shadowBlur = 0;
+
+            // Chiếc Laptop mini phát sáng trước mặt
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(-10, -3, 20, 11);
+            ctx.fillStyle = '#090a14';
+            ctx.fillRect(-8, -1, 16, 7);
+
+            ctx.restore();
+        }
+
+        function drawBossMentor() {
+            ctx.save();
+            ctx.translate(bossEntity.x, bossEntity.y);
+
+            // Hào quang vàng kim rực rỡ phía sau Lão Tổ
+            const haloGrad = ctx.createRadialGradient(0, 0, 10, 0, 0, 85);
+            haloGrad.addColorStop(0, 'rgba(250, 204, 21, 0.65)');
+            haloGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.2)');
+            haloGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+            ctx.fillStyle = haloGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, 85, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Vòng luân xa xoay quanh Lão Tổ
+            ctx.save();
+            ctx.rotate(-elapsedSeconds * 1.2);
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.arc(0, 0, 52, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Hình tượng Lão Tổ Giảng Viên uy nghiêm
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(0, -10, 16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Chòm râu bạc tiên phong đạo cốt
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(-7, 2);
+            ctx.lineTo(7, 2);
+            ctx.lineTo(0, 24);
+            ctx.closePath();
+            ctx.fill();
+
+            // Mũ quan / Mũ cử nhân phát sáng
+            ctx.fillStyle = '#1e1b4b';
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-22, -22);
+            ctx.lineTo(0, -32);
+            ctx.lineTo(22, -22);
+            ctx.lineTo(0, -14);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Danh hiệu & Lời thoại Lão Tổ
+            ctx.font = 'bold 13px "Be Vietnam Pro", system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#fde047';
+            ctx.fillText('LÃO TỔ TRƯỞNG MÔN • GIẢNG VIÊN', 0, -44);
+
+            // Khung thoại nhỏ
+            ctx.font = 'bold 12px "JetBrains Mono", monospace';
+            const quoteW = ctx.measureText(bossEntity.quote).width + 20;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.roundRect(-quoteW / 2, 34, quoteW, 24, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#fef9c3';
+            ctx.fillText(bossEntity.quote, 0, 50);
+
+            ctx.restore();
+        }
+
+        function drawGoldenBeam() {
+            ctx.save();
+            const beamWidth = 40 + twistProgress * 140;
+            const grad = ctx.createLinearGradient(bossEntity.x, bossEntity.y, player.x, player.y);
+            grad.addColorStop(0, 'rgba(250, 204, 21, 0.85)');
+            grad.addColorStop(0.5, 'rgba(254, 240, 138, 0.65)');
+            grad.addColorStop(1, 'rgba(34, 211, 238, 0.85)');
+
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = beamWidth;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = '#facc15';
+            ctx.shadowBlur = 30;
+
+            ctx.beginPath();
+            ctx.moveTo(bossEntity.x, bossEntity.y + 10);
+            ctx.lineTo(player.x, player.y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawItem(item) {
+            ctx.save();
+            ctx.translate(item.x, item.y);
+
+            const pulseStrength = item.isLotus ? 0.1 : 0.06;
+            const scale = 1 + Math.sin(item.pulse) * pulseStrength;
+            ctx.scale(scale, scale);
+
+            ctx.font = 'bold 12px "JetBrains Mono", monospace';
+            const textWidth = ctx.measureText(item.text).width;
+            const boxW = Math.max(64, textWidth + 22);
+            const boxH = 30;
+
+            // ShadowBlur rất nặng trên mobile → tắt
+            if (!isMobile) {
+                ctx.shadowColor = item.color;
+                ctx.shadowBlur = item.isLotus ? 16 : (item.isGood ? 10 : 12);
+            }
+
+            // Nền viên linh đan / khối lôi kiếp
+            if (item.isLotus) {
+                ctx.fillStyle = 'rgba(30, 20, 5, 0.92)';
+            } else {
+                ctx.fillStyle = item.isGood ? 'rgba(9, 18, 36, 0.9)' : 'rgba(45, 10, 20, 0.92)';
+            }
+            ctx.strokeStyle = item.color;
+            ctx.lineWidth = item.isLotus ? 2.5 : 2;
+
+            ctx.beginPath();
+            ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 15);
+            ctx.fill();
+            ctx.stroke();
+
+            // Chữ bên trong
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = item.isLotus ? '#fef3c7' : (item.isGood ? '#ffffff' : '#fecdd3');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.text, 0, 1);
+
+            ctx.restore();
+        }
+
+        function gameLoop(now) {
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            update(dt);
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * ============================================================================
+         * BẢNG XẾP HẠNG
+         * - Mặc định: lưu trên trình duyệt (localStorage)
+         * - Có Firebase Realtime DB: điểm dùng chung cho mọi người
+         * Điền URL DB vào FIREBASE_SCORES_URL để bật xếp hạng toàn cục
+         * Ví dụ: https://your-project-default-rtdb.firebaseio.com/dokiep_scores
+         * ============================================================================
+         */
+        // ========== BẢNG XẾP HẠNG ==========
+        // Để ĐT + laptop chung 1 bảng: dán URL Firebase Realtime Database vào đây
+        // Ví dụ: "https://ten-project-default-rtdb.asia-southeast1.firebasedatabase.app/dokiep_scores"
+        const FIREBASE_SCORES_URL = "https://dokiepcode-default-rtdb.firebaseio.com/dokiep_scores";
+        const LB_LOCAL_KEY = "dokiep_leaderboard_v1";
+
+        function isGlobalLB() {
+            return !!(FIREBASE_SCORES_URL && FIREBASE_SCORES_URL.indexOf("http") === 0);
+        }
+
+        function getLocalScores() {
+            try {
+                const raw = localStorage.getItem(LB_LOCAL_KEY);
+                if (!raw) return [];
+                const list = JSON.parse(raw);
+                return Array.isArray(list) ? list : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveLocalScore(entry) {
+            try {
+                const list = getLocalScores();
+                list.push(entry);
+                list.sort((a, b) => (b.score || 0) - (a.score || 0));
+                localStorage.setItem(LB_LOCAL_KEY, JSON.stringify(list.slice(0, 50)));
+                return list.slice(0, 20);
+            } catch (e) {
+                return [entry];
+            }
+        }
+
+        async function submitScore(name) {
+            const timeEl = document.getElementById('finalTime');
+            const entry = {
+                name: String(name || "Vô danh").trim().slice(0, 16) || "Vô danh",
+                score: Number(score) || 0,
+                time: timeEl ? timeEl.textContent : "00:00",
+                secret: chosenSecret || "—",
+                at: Date.now()
+            };
+
+            saveLocalScore(entry);
+
+            if (isGlobalLB()) {
+                try {
+                    const res = await fetch(FIREBASE_SCORES_URL.replace(/\/$/, "") + ".json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(entry)
+                    });
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    return { ok: true, global: true };
+                } catch (e) {
+                    return { ok: true, global: false, error: String(e.message || e) };
+                }
+            }
+            return { ok: true, global: false };
+        }
+
+        async function fetchLeaderboard() {
+            if (isGlobalLB()) {
+                try {
+                    const res = await fetch(FIREBASE_SCORES_URL.replace(/\/$/, "") + ".json");
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    const data = await res.json();
+                    if (!data || typeof data !== "object") return getLocalScores().slice(0, 15);
+                    const list = Object.keys(data).map(k => data[k]).filter(r => r && typeof r === "object");
+                    list.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    return list.slice(0, 15);
+                } catch (e) {
+                    return getLocalScores().slice(0, 15);
+                }
+            }
+            return getLocalScores().slice(0, 15);
+        }
+
+        function renderLeaderboard(list) {
+            const el = document.getElementById('leaderboardList');
+            if (!el) return;
+
+            const modeNote = isGlobalLB()
+                ? `<div class="text-[10px] text-emerald-400/90 mb-1.5">🌐 Bảng toàn cục (đồng bộ mọi thiết bị)</div>`
+                : `<div class="text-[10px] text-amber-400/90 mb-1.5">📱 Chỉ trên máy này — chưa cấu hình Firebase nên ĐT và laptop khác nhau</div>`;
+
+            if (!list || list.length === 0) {
+                el.innerHTML = modeNote + `<div class="text-slate-500 text-center py-3">Chưa có điểm — thắng 1 ván rồi bấm Gửi điểm!</div>`;
+                return;
+            }
+
+            const rows = list.map((row, i) => {
+                const rank = i + 1;
+                const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+                const name = String(row.name || "Vô danh").replace(/[<>&]/g, "");
+                const sc = Number(row.score || 0).toLocaleString();
+                const tm = String(row.time || "");
+                return `<div class="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg ${rank <= 3 ? "bg-amber-500/10 border border-amber-500/20" : "bg-slate-800/50"}">
+                    <span class="text-slate-300 w-10 shrink-0">${medal}</span>
+                    <span class="flex-1 text-cyan-100 truncate">${name}</span>
+                    <span class="text-amber-300 font-bold shrink-0">${sc}</span>
+                    <span class="text-slate-500 w-12 text-right shrink-0">${tm}</span>
+                </div>`;
+            }).join("");
+
+            el.innerHTML = modeNote + rows;
+        }
+
+        async function refreshLeaderboard() {
+            const el = document.getElementById('leaderboardList');
+            if (el) el.innerHTML = `<div class="text-slate-500 text-center py-2">Đang tải BXH...</div>`;
+            try {
+                const list = await fetchLeaderboard();
+                renderLeaderboard(list);
+            } catch (e) {
+                if (el) el.innerHTML = `<div class="text-rose-400 text-center py-2">Không tải được BXH</div>`;
+            }
+        }
+
+
+        /**
+         * ========================================================================
+         * GẮN SỰ KIỆN NÚT BẤM & KHỞI CHẠY BAN ĐẦU
+         * ========================================================================
+         */
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('retryBtn').addEventListener('click', startGame);
+        document.getElementById('playAgainBtn').addEventListener('click', startGame);
+
+        const submitScoreBtn = document.getElementById('submitScoreBtn');
+        if (submitScoreBtn) {
+            submitScoreBtn.addEventListener('click', async () => {
+                const input = document.getElementById('playerNameInput');
+                const status = document.getElementById('submitStatus');
+                const name = (input && input.value) ? input.value : '';
+                submitScoreBtn.disabled = true;
+                if (status) status.textContent = 'Đang gửi điểm...';
+                const result = await submitScore(name);
+                if (status) {
+                    if (result.global) status.textContent = '✅ Đã ghi danh Bảng Xếp Hạng toàn cục!';
+                    else if (result.error) status.textContent = '✅ Đã lưu máy này (chưa cấu hình Firebase toàn cục).';
+                    else status.textContent = '✅ Đã lưu điểm trên máy này!';
+                }
+                submitScoreBtn.disabled = false;
+                await refreshLeaderboard();
+            });
+        }
+        const refreshLbBtn = document.getElementById('refreshLbBtn');
+        if (refreshLbBtn) refreshLbBtn.addEventListener('click', () => refreshLeaderboard());
+
+        document.getElementById('soundToggleBtn').addEventListener('click', () => {
+            sound.init();
+            const isMuted = sound.toggleMute();
+            document.getElementById('soundOnIcon').classList.toggle('hidden', isMuted);
+            document.getElementById('soundOffIcon').classList.toggle('hidden', !isMuted);
+            if (!isMuted && gameState === 'VICTORY') {
+                sound.startGratitudeBGM();
+            }
+        });
+
+        window.onload = function () {
+            resizeCanvas();
+            initBackground();
+            lastFrameTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
